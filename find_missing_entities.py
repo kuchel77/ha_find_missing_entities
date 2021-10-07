@@ -23,18 +23,25 @@ def findkeys(node, kv):
 def find_missing_entities(filename, config):
     """ Find the missing entities from a single file """
     yaml_file = open(filename)
- #   try:
-    data = load(yaml_file, Loader=Loader)
- #   except:
- #       print("failed to load" + filename)
- #       return
+    try:
+       data = load(yaml_file, Loader=Loader)
+    except:
+        print("failed to load" + filename)
+        return
 
     try:
        automation_entities = set(findkeys(data, 'entity_id'))
     except TypeError:
-        #failing at the moment with arrays in entity ids:
-        print(findkeys(data, 'entity_id'))
-        return
+        #Ugly hack for when you have entity_id: and then an array.
+        automation_entities = []
+        results = list(findkeys(data, 'entity_id'))
+        for result in results:
+            if isinstance(result, list):
+                for item in result:
+                    automation_entities.append(item)
+            else:
+                automation_entities.append(result)
+        automation_entities = set(automation_entities)
 
     set_entities = set(entities_list)
     missing_entities = automation_entities.difference(set_entities)
