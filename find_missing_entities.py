@@ -72,6 +72,7 @@ response = get(url, headers=headers)
 json = response.json()
 #Catch any errors before this if URL is wrong and we get nothing to JSON
 
+
 entities_list = []
 for e in json:
     entities_list.append(e["entity_id"])
