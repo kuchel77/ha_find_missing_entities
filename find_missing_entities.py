@@ -1,15 +1,18 @@
-from yaml import load, dump
-try:
-    from yaml import CLoader as Loader, CDumper as Dumper
-except ImportError:
-    from yaml import Loader, Dumper
+""" Find missing entity_id's from automations in Home Assistant"""
 import os
+from yaml import load
+try:
+    from yaml import CLoader as Loader
+except ImportError:
+    from yaml import Loader
+from requests import get
 
 def findkeys(node, kv):
+    """ Find a key in a list """
     if isinstance(node, list):
         for i in node:
             for x in findkeys(i, kv):
-               yield x
+                yield x
     elif isinstance(node, dict):
         if kv in node:
             yield node[kv]
@@ -18,7 +21,7 @@ def findkeys(node, kv):
                 yield x
 
 def find_missing_entities(filename, config):
-
+    """ Find the missing entities from a single file """
     yaml_file = open(filename)
     try:
         data = load(yaml_file, Loader=Loader)
@@ -31,27 +34,18 @@ def find_missing_entities(filename, config):
     except:
         #failing at the moment with arrays in entity ids:
         return
-        
+
     set_entities = set(entities_list)
     missing_entities = automation_entities.difference(set_entities)
 
-#    print("Number of automation Entites: ")
-#    print(len(automation_entities))
-#    print("Number of automation Entites missing: ")
-#    print(len(missing_entities))
     print(filename)
     if len(missing_entities) > 0:
         print(missing_entities)
     else:
         print("Nothing missing")
 
-
-
 url = "http://192.168.0.245:8123/api/states"
 token = ""
-
-from requests import get
- 
 headers = {
     "Authorization": "Bearer "+token,
     "content-type": "application/json",
@@ -59,7 +53,6 @@ headers = {
 
 response = get(url, headers=headers)
 json = response.json()
-
 
 entities_list = []
 for e in json:
