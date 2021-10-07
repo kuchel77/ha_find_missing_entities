@@ -23,16 +23,17 @@ def findkeys(node, kv):
 def find_missing_entities(filename, config):
     """ Find the missing entities from a single file """
     yaml_file = open(filename)
-    try:
-        data = load(yaml_file, Loader=Loader)
-    except:
-        print("failed to load" + filename)
-        return
+ #   try:
+    data = load(yaml_file, Loader=Loader)
+ #   except:
+ #       print("failed to load" + filename)
+ #       return
 
     try:
-        automation_entities = set(findkeys(data, 'entity_id'))
-    except:
+       automation_entities = set(findkeys(data, 'entity_id'))
+    except TypeError:
         #failing at the moment with arrays in entity ids:
+        print(findkeys(data, 'entity_id'))
         return
 
     set_entities = set(entities_list)
@@ -44,15 +45,25 @@ def find_missing_entities(filename, config):
     else:
         print("Nothing missing")
 
-url = "http://192.168.0.245:8123/api/states"
-token = ""
+url = os.environ.get('HASS_SERVER') + "/api/states"
+if url is None:
+    print("HASS_SERVER environmental variable needs to be set")
+    
+token = os.environ.get('HASS_TOKEN')
+if token is None:
+    print("HASS_TOKEN environmental variable needs to be set")
+    
+
 headers = {
     "Authorization": "Bearer "+token,
     "content-type": "application/json",
 }
 
 response = get(url, headers=headers)
+#Catch server errors
+
 json = response.json()
+#Catch any errors before this if URL is wrong and we get nothing to JSON
 
 entities_list = []
 for e in json:
