@@ -17,7 +17,7 @@ import requests
 
 
 def findkeys(node, key_value):
-    """Find a key in a list"""
+    """Find a key in a dict or list"""
     if isinstance(node, list):
         for i in node:
             for item in findkeys(i, key_value):
