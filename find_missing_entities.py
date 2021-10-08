@@ -1,49 +1,51 @@
 """ Find missing entity_id's from automations in Home Assistant"""
 import os
-from yaml import load
+import sys
+import yaml
+
 try:
     from yaml import CLoader as Loader
 except ImportError:
     from yaml import Loader
 from requests import get
 
-def findkeys(node, kv):
-    """ Find a key in a list """
+try:
+    from simplejson.errors import JSONDecodeError
+except ImportError:
+    from json.decoder import JSONDecodeError
+import requests
+
+
+def findkeys(node, key_value):
+    """Find a key in a list"""
     if isinstance(node, list):
         for i in node:
-            for x in findkeys(i, kv):
-                yield x
+            for item in findkeys(i, key_value):
+                yield item
     elif isinstance(node, dict):
-        if kv in node:
-            yield node[kv]
+        if key_value in node:
+            if isinstance(node[key_value], list):
+                for i in node[key_value]:
+                    yield i
+            else:
+                yield node[key_value]
         for j in node.values():
-            for x in findkeys(j, kv):
-                yield x
+            for item in findkeys(j, key_value):
+                yield item
 
-def find_missing_entities(filename, config):
-    """ Find the missing entities from a single file """
+
+def find_missing_entities(filename, entities):
+    """Find the missing entities from a single file"""
     yaml_file = open(filename)
     try:
-       data = load(yaml_file, Loader=Loader)
-    except:
-        print("failed to load" + filename)
+        data = yaml.load(yaml_file, Loader=Loader)
+    except yaml.YAMLError:
+        print("Failed to load: " + filename)
         return
 
-    try:
-       automation_entities = set(findkeys(data, 'entity_id'))
-    except TypeError:
-        #Ugly hack for when you have entity_id: and then an array.
-        automation_entities = []
-        results = list(findkeys(data, 'entity_id'))
-        for result in results:
-            if isinstance(result, list):
-                for item in result:
-                    automation_entities.append(item)
-            else:
-                automation_entities.append(result)
-        automation_entities = set(automation_entities)
+    automation_entities = set(findkeys(data, "entity_id"))
 
-    set_entities = set(entities_list)
+    set_entities = set(entities)
     missing_entities = automation_entities.difference(set_entities)
 
     print(filename)
@@ -52,32 +54,37 @@ def find_missing_entities(filename, config):
     else:
         print("Nothing missing")
 
-url = os.environ.get('HASS_SERVER') + "/api/states"
+
+url = os.environ.get("HASS_SERVER")
 if url is None:
     print("HASS_SERVER environmental variable needs to be set")
-    
-token = os.environ.get('HASS_TOKEN')
+url = url + "/api/states"
+
+token = os.environ.get("HASS_TOKEN")
 if token is None:
     print("HASS_TOKEN environmental variable needs to be set")
-    
 
 headers = {
-    "Authorization": "Bearer "+token,
+    "Authorization": "Bearer " + token,
     "content-type": "application/json",
 }
 
-response = get(url, headers=headers)
-#Catch server errors
+try:
+    response = get(url, headers=headers)
+except requests.exceptions.RequestException:  # This is the correct syntax
+    raise SystemExit()
 
-json = response.json()
-#Catch any errors before this if URL is wrong and we get nothing to JSON
-
+try:
+    json = response.json()
+except JSONDecodeError:
+    print("Error with JSON decoding. Check your URL for you server.")
+    sys.exit()
 
 entities_list = []
 for e in json:
     entities_list.append(e["entity_id"])
 
-with os.scandir('.') as entries:
-    for entry in entries:
-        if entry.name.endswith(".yaml"):
-            find_missing_entities(entry.name, entities_list)
+with os.scandir(".") as files:
+    for file in files:
+        if file.name.endswith(".yaml"):
+            find_missing_entities(file.name, entities_list)
