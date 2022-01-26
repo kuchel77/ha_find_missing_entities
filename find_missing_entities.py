@@ -47,6 +47,7 @@ def find_missing_entities(filename, entities):
 
     set_entities = set(entities)
     missing_entities = automation_entities.difference(set_entities)
+    missing_entities = {e for e in missing_entities if '{' not in e}
 
     print(filename)
     if len(missing_entities) > 0:
