@@ -21,7 +21,7 @@ import requests
 url = os.environ.get("HASS_SERVER")
 if url is None:
     print("HASS_SERVER environmental variable needs to be set")
-url = url + "/api/states"
+url = url + "/api"
 
 token = os.environ.get("HASS_TOKEN")
 if token is None:
@@ -47,7 +47,7 @@ def findkeys(node, key_value):
                 yield item
 
 def load_entities():
-    json = load_from_url("states")
+    json = load_from_url("/states")
 
     entities_list = []
     for e in json:
@@ -56,21 +56,21 @@ def load_entities():
     return entities_list
 
 def load_services():
-    json = load_from_url("services")
+    json = load_from_url("/services")
     services_list = []
+    
     for domain in json:
+        print(domain)
         for service in domain["services"]:
             services_list.append(domain["domain"]+"."+service)
     return services_list
 
 def load_from_url(append_url):
-
     full_url = url + append_url
     headers = {
         "Authorization": "Bearer " + token,
         "content-type": "application/json",
     }
-    
     try:
         response = get(full_url, headers=headers)
     except requests.exceptions.RequestException:  # This is the correct syntax
@@ -131,8 +131,8 @@ def find_missing_services(automation_services, filename):
     else:
         print(filename + " - Not missing services")
 
-services = load_services()
 entities = load_entities()
+services = load_services()
 
 with os.scandir(".") as files:
     for file in files:
