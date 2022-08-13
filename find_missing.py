@@ -22,6 +22,7 @@ url = os.environ.get("HASS_SERVER")
 if url is None:
     print("HASS_SERVER environmental variable needs to be set")
 url = url + "/api"
+verbose = False
 
 token = os.environ.get("HASS_TOKEN")
 if token is None:
@@ -60,7 +61,6 @@ def load_services():
     services_list = []
     
     for domain in json:
-        print(domain)
         for service in domain["services"]:
             services_list.append(domain["domain"]+"."+service)
     return services_list
@@ -113,7 +113,8 @@ def find_missing_entities(automation_entities, filename):
         print(missing_entities)
         error_count = error_count + 1
     else:
-        print(filename + " - No missing entities")
+        if verbose == True:
+            print(filename + " - No missing entities")
 
 def find_missing_services(automation_services, filename):
 
@@ -129,7 +130,8 @@ def find_missing_services(automation_services, filename):
         print(missing_services)
         error_count = error_count + 1
     else:
-        print(filename + " - Not missing services")
+        if verbose == True:
+            print(filename + " - Not missing services")
 
 entities = load_entities()
 services = load_services()
