@@ -25,3 +25,15 @@ Command line parameter for a single file.
 
 Include this sort of thing in the VS Code extension.
 
+## Example using Drone
+
+``docker build -t findmissing .``
+
+In .drone.yml
+
+``  - name: findmissing
+    image: findmissing
+    pull: if-not-exists 
+    commands:
+      - cd automations 
+      - python3 find_missing.py``
