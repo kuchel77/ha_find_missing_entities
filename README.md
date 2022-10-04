@@ -23,17 +23,23 @@ Otherwise, it will parse all of the files in the current directory that end in .
 Command line parameter for a different directory.
 Command line parameter for a single file.
 
-Include this sort of thing in the VS Code extension.
+Better docker usage.
 
 ## Example using Drone
+
+This allows you to have a prebuilt docker image rather than rebuilding a docker image each time.
 
 ``docker build -t findmissing .``
 
 In .drone.yml
 
-``  - name: findmissing
+```  
+  - name: findmissing
     image: findmissing
     pull: if-not-exists 
     commands:
       - cd automations 
-      - python3 find_missing.py``
+      - python3 find_missing.py
+```
+
+See the file example.drone.yml (and then copy to .drone.yml in your root directory. It assumes you have your automations and the find_missing.py file in your automations.
